@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+    background-color: theme('colors.haloLightGray');
+    font-family: theme('fontFamily.sans');
+}
+
+.hero-section {
+    @apply bg-hero-pattern bg-cover bg-center h-screen flex items-center justify-center;
+}
+
+.hero-title {
+    @apply text-4xl font-bold text-haloYellow;
+}
