@@ -11,11 +11,10 @@ class Type extends Model {
     protected $fillable = ['name', 'color', 'image'];
 
     public function spartans() {
-        return $this->belongsToMany(Spartan::class);
+        return $this->belongsToMany(Spartan::class, 'spartan_type');
     }
 
     public function attacks() {
         return $this->hasMany(Attack::class);
     }
 }
-

@@ -10,6 +10,8 @@
 
     <!-- Fonts -->
     <link rel="stylesheet" href="https://fonts.bunny.net/css2?family=Orbitron:wght@400;600;700&display=swap">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -20,24 +22,29 @@
         <div class="container mx-auto flex flex-col space-y-10">
             <nav class="flex justify-between items-center py-2">
                 <div>
-                    <a href="/" class="group font-bold text-3xl flex items-center space-x-4 hover:text-haloGreen transition">
-                        <x-application-logo class="w-10 h-10 fill-current text-gray-500 group-hover:text-haloGreen transition" />
+                    <a href="/" class="group font-bold text-3xl flex items-center space-x-4 hover:text-emerald-600 transition">
+                        <x-application-logo class="w-10 h-10 fill-current text-gray-500 group-hover:text-emerald-500 transition" />
                         <span class="text-haloYellow">Halodaix</span>
                     </a>
                 </div>
                 <div class="flex items-center space-x-4 justify-end">
-                    <a class="font-bold text-haloYellow hover:text-haloGreen transition" href="/">Spartans</a>
-                    <a class="font-bold text-haloYellow hover:text-haloGreen transition" href="{{ route('about.index') }}">À propos</a>
+                    <a class="font-bold hover:text-emerald-600 transition" href="/">Spartans</a>
+                    <a class="font-bold hover:text-emerald-600 transition" href="{{ route('about.index') }}">À propos</a>
+                    <a class="font-bold hover:text-emerald-600 transition" href="{{ route('rapport') }}">Au rapport chef</a>
                     @auth
-                        <a href="{{ route('dashboard') }}" class="font-bold text-haloYellow hover:text-haloGreen transition">Admin Dashboard</a>
+                        <a href="{{ route('dashboard') }}" class="font-bold hover:text-emerald-600 transition">Admin Dashboard</a>
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
-                            <button type="submit" class="font-bold text-haloYellow hover:text-haloGreen transition">Logout</button>
+                            <button type="submit" class="font-bold hover:text-emerald-600 transition">Logout</button>
                         </form>
                     @else
-                        <a href="{{ route('login') }}" class="font-bold text-haloYellow hover:text-haloGreen transition">Login</a>
-                        <a href="{{ route('register') }}" class="ml-4 font-bold text-haloYellow hover:text-haloGreen transition">Register</a>
+                        <a href="{{ route('login') }}" class="font-bold hover:text-emerald-600 transition">Login</a>
+                        <a href="{{ route('register') }}" class="ml-4 font-bold hover:text-emerald-600 transition">Register</a>
                     @endauth
+                    <!-- Bouton de contrôle de l'audio -->
+                    <button id="audio-control-header" class="font-bold hover:text-emerald-600 transition">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
                 </div>
             </nav>
 
@@ -55,7 +62,7 @@
                         </a>
                         <a href="https://linkedin.com/in/your-profile" target="_blank" class="hover:text-haloGreen transition">
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M4.98 3.5C4.98 2.12 6.1 1 7.48 1c1.38 0 2.5 1.12 2.5 2.5S8.86 6 7.48 6C6.1 6 4.98 4.88 4.98 3.5zM4 8h6v14H4zM16.5 8h-2.5c-2.24 0-3.5 1.46-3.5 4.3V22h-6V8h6v2.57h.07C11.27 9.5 12.91 8 15.5 8c3.5 0 5 2.29 5 5.5V22h-6v-8.7c0-2.04-.52-3.3-2.04-3.3-2.04 0-2.96 1.61-2.96 3.29V22H4v-8.7c0-2.04-.52-3.3-2.04-3.3C-.04 9.61-.96 11.22-.96 12.9V22h-6V8h6v2.57h.07C2.27 9.5 3.91 8 6.5 8c3.5 0 5 2.29 5 5.5V22z"/>
+                                <path d="M4.98 3.5C4.98 2.12 6.1 1 7.48 1c1.38 0 2.5 1.12 2.5 2.5S8.86 6 7.48 6C6.1 6 4.98 4.88 4.98 3.5zM4 8h6v14H4zM16.5 8h-2.5c-2.24 0-3.5 1.46-3.5 4.3V22h-6V8h6v2.57h.07C11.27 9.5 12.91 8 15.5 8c3.5 0 5 2.29 5 5.5V22z"/>
                             </svg>
                         </a>
                         <a href="https://tiktok.com/@your-profile" target="_blank" class="hover:text-haloGreen transition">
@@ -67,10 +74,40 @@
                     <div>
                         &copy; {{ date('Y') }} Halodaix. All rights reserved.
                     </div>
+                    <!-- Bouton de contrôle de l'audio dans le footer -->
+                    <button id="audio-control-footer" class="font-bold hover:text-emerald-600 transition mt-4">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
                 </div>
             </footer>
         </div>
     </div>
+    <!-- Bande sonore -->
+    <audio id="background-music" src="{{ asset('sounds/halotheme.mp3') }}" autoplay loop></audio>
+
+    <!-- Script de contrôle de l'audio -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const audio = document.getElementById('background-music');
+            const audioControlHeader = document.getElementById('audio-control-header');
+            const audioControlFooter = document.getElementById('audio-control-footer');
+
+            function toggleAudio() {
+                if (audio.paused) {
+                    audio.play();
+                    audioControlHeader.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                    audioControlFooter.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                } else {
+                    audio.pause();
+                    audioControlHeader.innerHTML = '<i class="fas fa-play"></i> Play';
+                    audioControlFooter.innerHTML = '<i class="fas fa-play"></i> Play';
+                }
+            }
+
+            audioControlHeader.addEventListener('click', toggleAudio);
+            audioControlFooter.addEventListener('click', toggleAudio);
+        });
+    </script>
 </body>
 
 </html>

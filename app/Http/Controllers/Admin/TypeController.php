@@ -3,17 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Spartan;
 use App\Models\Type;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class TypeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $types = Type::orderByDesc('updated_at')->paginate(10);
-        return view('admin.types.index', compact('types'));
+        $search = $request->query('search');
+        $types = Type::where('name', 'LIKE', '%'.$search.'%')
+            ->orWhere('color', 'LIKE', '%'.$search.'%')
+            ->paginate(12);
+
+        return view('admin.types.index', [
+            'types' => $types,
+        ]);
     }
+
 
     public function create()
     {
@@ -25,57 +33,34 @@ class TypeController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'color' => 'required|string|max:255',
-            'image' => 'nullable|image|max:2048'
         ]);
 
-        $type = new Type($request->only(['name', 'color']));
+        Type::create($request->all());
 
-        if ($request->hasFile('image')) {
-            $type->image = $request->file('image')->store('images', 'public');
-        }
-
-        $type->save();
-
-        return redirect()->route('types.index')->with('success', 'Type ajouté avec succès.');
+        return redirect()->route('admin.types.index')->with('success', 'Type créé avec succès.');
     }
 
-    public function edit($id)
+    public function edit(Type $type)
     {
-        $type = Type::findOrFail($id);
         return view('admin.types.edit', compact('type'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Type $type)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'color' => 'required|string|max:255',
-            'image' => 'nullable|image|max:2048'
         ]);
 
-        $type = Type::findOrFail($id);
-        $type->fill($request->only(['name', 'color']));
+        $type->update($request->all());
 
-        if ($request->hasFile('image')) {
-            // Supprimer l'ancienne image si elle existe
-            if ($type->image) {
-                Storage::disk('public')->delete($type->image);
-            }
-            $type->image = $request->file('image')->store('images', 'public');
-        }
-
-        $type->save();
-
-        return redirect()->route('types.index')->with('success', 'Type modifié avec succès.');
+        return redirect()->route('admin.types.index')->with('success', 'Type mis à jour avec succès.');
     }
 
-    public function destroy($id)
+    public function destroy(Type $type)
     {
-        $type = Type::findOrFail($id);
-        if ($type->image) {
-            Storage::disk('public')->delete($type->image);
-        }
         $type->delete();
-        return redirect()->route('types.index')->with('success', 'Type supprimé avec succès.');
+
+        return redirect()->route('admin.types.index')->with('success', 'Type supprimé avec succès.');
     }
 }

@@ -6,18 +6,31 @@ use App\Http\Controllers\Controller;
 use App\Models\Spartan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Type;
 
 class SpartanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $spartans = Spartan::orderByDesc('updated_at')->paginate(10);
-        return view('admin.spartans.index', compact('spartans'));
+        $search = $request->query('search');
+        $spartans = Spartan::where('name', 'LIKE', '%'.$search.'%')
+            ->orWhere('pv', 'LIKE', '%'.$search.'%')
+            ->orWhere('weight', 'LIKE', '%'.$search.'%')
+            ->orWhere('height', 'LIKE', '%'.$search.'%')
+            ->orWhereHas('types', function ($query) use ($search) {
+                $query->where('name', 'LIKE', '%'.$search.'%');
+            })
+            ->paginate(12);
+
+        return view('admin.spartans.index', [
+            'spartans' => $spartans,
+        ]);
     }
 
     public function create()
     {
-        return view('admin.spartans.create');
+        $types = Type::all();
+        return view('admin.spartans.create', compact('types'));
     }
 
     public function store(Request $request)
@@ -27,59 +40,71 @@ class SpartanController extends Controller
             'pv' => 'required|integer',
             'weight' => 'required|numeric',
             'height' => 'required|numeric',
-            'image' => 'nullable|image|max:2048'
+            'types' => 'array',
         ]);
 
-        $spartan = new Spartan($request->only(['name', 'pv', 'weight', 'height']));
+        $spartan = Spartan::create($request->only(['name', 'pv', 'weight', 'height']));
 
         if ($request->hasFile('image')) {
-            $spartan->image = $request->file('image')->store('images', 'public');
+            $path = $request->file('image')->store('images', 'public');
+            $spartan->image = $path;
         }
 
         $spartan->save();
 
-        return redirect()->route('spartans.index')->with('success', 'Spartan ajouté avec succès.');
+        // Sync types
+        $spartan->types()->sync($request->types);
+
+        return redirect()->route('admin.spartans.index')->with('success', 'Spartan créé avec succès.');
     }
 
     public function edit($id)
     {
         $spartan = Spartan::findOrFail($id);
-        return view('admin.spartans.edit', compact('spartan'));
+        $types = Type::all();
+        return view('admin.spartans.edit', compact('spartan', 'types'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, Spartan $spartan)
     {
         $request->validate([
             'name' => 'required|string|max:255',
             'pv' => 'required|integer',
             'weight' => 'required|numeric',
             'height' => 'required|numeric',
-            'image' => 'nullable|image|max:2048'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'types' => 'array',
         ]);
 
-        $spartan = Spartan::findOrFail($id);
-        $spartan->fill($request->only(['name', 'pv', 'weight', 'height']));
+        $spartan->update($request->only(['name', 'pv', 'weight', 'height']));
 
         if ($request->hasFile('image')) {
-            // Supprimer l'ancienne image si elle existe
-            if ($spartan->image) {
+            // Supprimez l'ancienne image si elle existe
+            if ($spartan->image && Storage::disk('public')->exists($spartan->image)) {
                 Storage::disk('public')->delete($spartan->image);
             }
-            $spartan->image = $request->file('image')->store('images', 'public');
+
+            // Stockez la nouvelle image
+            $path = $request->file('image')->store('images', 'public');
+            $spartan->image = $path;
         }
 
         $spartan->save();
 
-        return redirect()->route('spartans.index')->with('success', 'Spartan modifié avec succès.');
+        // Sync types
+        $spartan->types()->sync($request->types);
+
+        return redirect()->route('admin.spartans.index')->with('success', 'Spartan mis à jour avec succès.');
     }
 
-    public function destroy($id)
+    public function destroy(Spartan $spartan)
     {
-        $spartan = Spartan::findOrFail($id);
         if ($spartan->image) {
             Storage::disk('public')->delete($spartan->image);
         }
         $spartan->delete();
-        return redirect()->route('spartans.index')->with('success', 'Spartan supprimé avec succès.');
+
+        return redirect()->route('admin.spartans.index')->with('success', 'Spartan supprimé avec succès.');
     }
 }
+

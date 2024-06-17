@@ -1,40 +1,42 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Ajouter une Attaque') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                <div class="p-6 sm:px-20 bg-white border-b border-gray-200">
-                    <form action="{{ route('attacks.store') }}" method="POST">
-                        @csrf
-                        <div class="mb-4">
-                            <label for="name" class="block text-sm font-medium text-gray-700">Nom</label>
-                            <input type="text" name="name" id="name" class="mt-1 block w-full" required>
-                        </div>
-                        <div class="mb-4">
-                            <label for="damage" class="block text-sm font-medium text-gray-700">Dégâts</label>
-                            <input type="number" name="damage" id="damage" class="mt-1 block w-full" required>
-                        </div>
-                        <div class="mb-4">
-                            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" id="description" class="mt-1 block w-full" rows="4" required></textarea>
-                        </div>
-                        <div class="mb-4">
-                            <label for="type_id" class="block text-sm font-medium text-gray-700">Type</label>
-                            <select name="type_id" id="type_id" class="mt-1 block w-full">
-                                @foreach ($types as $type)
-                                    <option value="{{ $type->id }}">{{ $type->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <button type="submit" class="text-white bg-blue-500 hover:bg-blue-700 font-bold py-2 px-4 rounded">Ajouter</button>
-                    </form>
-                </div>
-            </div>
+@section('content')
+    <h1 class="font-semibold text-xl text-gray-800 leading-tight">Ajouter une Attaque</h1>
+
+    <form action="{{ route('admin.attacks.store') }}" method="POST" enctype="multipart/form-data">
+        @csrf
+
+        <div class="mb-4">
+            <label for="name" class="block text-gray-700">Nom</label>
+            <input type="text" name="name" id="name" class="mt-1 block w-full">
         </div>
-    </div>
-</x-app-layout>
+
+        <div class="mb-4">
+            <label for="damage" class="block text-gray-700">Dégâts</label>
+            <input type="number" name="damage" id="damage" class="mt-1 block w-full">
+        </div>
+
+        <div class="mb-4">
+            <label for="description" class="block text-gray-700">Description</label>
+            <textarea name="description" id="description" class="mt-1 block w-full"></textarea>
+        </div>
+
+        <div class="mb-4">
+            <label for="type_id" class="block text-gray-700">Type</label>
+            <select name="type_id" id="type_id" class="mt-1 block w-full">
+                @foreach($types as $type)
+                    <option value="{{ $type->id }}">{{ $type->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="image" class="block text-gray-700">Image</label>
+            <input type="file" name="image" id="image" class="mt-1 block w-full">
+        </div>
+
+        <div class="flex justify-end">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Ajouter</button>
+        </div>
+    </form>
+@endsection

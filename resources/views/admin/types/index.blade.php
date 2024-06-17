@@ -1,58 +1,67 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Types') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                <div class="p-6 sm:px-20 bg-white border-b border-gray-200">
-                    <div class="flex justify-between mt-8">
-                        <div class=" text-2xl">
-                            Liste des Types
-                        </div>
-                        <div class="flex items-center justify-center space-x-8">
-                            <a href="{{ route('types.create') }}"
-                                class="text-gray-500 font-bold py-2 px-4 rounded hover:bg-gray-200 transition">Ajouter un Type</a>
-                        </div>
-                    </div>
-                    <div class="mt-6 text-gray-500">
-                        <table class="table-auto w-full">
-                            <thead>
-                                <tr class="uppercase text-left">
-                                    <th class="px-4 py-2 border">Nom</th>
-                                    <th class="px-4 py-2 border">Couleur</th>
-                                    <th class="px-4 py-2 border">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($types as $type)
-                                    <tr class="hover:bg-gray-50 odd:bg-gray-100 hover:odd:bg-gray-200 transition">
-                                        <td class="border px-4 py-2">{{ $type->name }}</td>
-                                        <td class="border px-4 py-2">{{ $type->color }}</td>
-                                        <td class="border px-4 py-2 space-x-4">
-                                            <a href="{{ route('types.edit', $type->id) }}"
-                                                class="text-blue-400">Edit</a>
-                                            <form action="{{ route('types.destroy', $type->id) }}" method="POST"
-                                                class="inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-400">Delete</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+@section('content')
+    <h1 class="font-semibold text-xl text-gray-800 leading-tight">Liste des Types</h1>
 
-                        <div class="mt-4">
-                            {{ $types->links() }}
-                        </div>
-                    </div>
-                </div>
+    <div class="mt-4">
+        <form action="{{ route('admin.types.index') }}" method="GET" class="mb-4">
+            <div class="flex items-center">
+                <input
+                    type="text"
+                    name="search"
+                    id="search"
+                    placeholder="Rechercher un Type"
+                    class="flex-grow border border-gray-300 rounded shadow px-4 py-2 mr-4"
+                    value="{{ request()->search }}"
+                    autofocus
+                />
+                <button
+                    type="submit"
+                    class="bg-white text-gray-600 px-4 py-2 rounded-lg shadow"
+                >
+                    <x-heroicon-o-magnifying-glass class="h-5 w-5" />
+                </button>
             </div>
+        </form>
+
+        <div class="flex justify-end mb-4">
+            <a href="{{ route('admin.types.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded">
+                Ajouter un Type
+            </a>
+        </div>
+
+        <table class="min-w-full bg-white">
+            <thead>
+                <tr>
+                    <th class="px-4 py-2">Nom</th>
+                    <th class="px-4 py-2">Couleur</th>
+                    <th class="px-4 py-2">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($types as $type)
+                    <tr>
+                        <td class="border px-4 py-2">{{ $type->name }}</td>
+                        <td class="border px-4 py-2">{{ $type->color }}</td>
+                        <td class="border px-4 py-2 flex">
+                            <a href="{{ route('admin.types.edit', $type) }}" class="text-blue-500 mr-2">
+                                <x-heroicon-o-pencil class="w-5 h-5" />
+                            </a>
+                            <form action="{{ route('admin.types.destroy', $type) }}" method="POST" class="inline-block" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce type ? Cette action est irréversible.')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-500">
+                                    <x-heroicon-o-trash class="w-5 h-5" />
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        <div class="mt-4">
+            {{ $types->links() }}
         </div>
     </div>
-</x-app-layout>
+@endsection

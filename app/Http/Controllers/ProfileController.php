@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use App\Models\User;
 
 class ProfileController extends Controller
 {
@@ -56,5 +57,49 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    /**
+     * Update the user's avatar.
+     */
+    public function updateAvatar(Request $request): RedirectResponse
+    {
+        // Validation de l'image sans passer par une form request
+        $request->validate([
+            'avatar' => ['required', 'image', 'max:2048'],
+        ]);
+
+        // Si l'image est valide, on la sauvegarde
+        if ($request->hasFile('avatar')) {
+            $user = $request->user();
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar_path = $path;
+            $user->save();
+        }
+
+        return Redirect::route('profile.edit')->with('status', 'avatar-updated');
+    }
+
+    /**
+     * Display the specified user's profile.
+     */
+    public function show(User $user): View
+    {
+        // Les articles publiés par l'utilisateur (dans votre cas, vous pouvez remplacer 'articles' par 'spartans' si c'est pertinent)
+        $spartans = $user->spartans()
+            ->withCount('comments')
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Les commentaires de l'utilisateur
+        $comments = $user->comments()
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('profile.show', [
+            'user' => $user,
+            'spartans' => $spartans,
+            'comments' => $comments,
+        ]);
     }
 }

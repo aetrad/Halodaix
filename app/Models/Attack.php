@@ -15,7 +15,6 @@ class Attack extends Model {
     }
 
     public function spartans() {
-        return $this->belongsToMany(Spartan::class);
+        return $this->belongsToMany(Spartan::class, 'attack_spartan');
     }
 }
-
